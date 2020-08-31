@@ -738,7 +738,7 @@ void cmdPositionSetpoint(
       }
       msg.header.frame_id = m_tf_prefix + "/base_link";
 
-      // msg.pose.orientation.x = data->roll;
+      msg.pose.orientation.x = data->roll;
       msg.pose.orientation.y = data->pitch;
       msg.pose.orientation.z = data->yaw;
       msg.pose.orientation.w = data->thrust;
