@@ -205,7 +205,7 @@ private:
   } __attribute__((packed));
 
   struct logSetpoint {
-    float roll;
+    // float roll;
     float pitch;
     float yaw;
     int32_t thrust;
@@ -565,10 +565,9 @@ void cmdPositionSetpoint(
 
         logBlockSetpoint.reset(new LogBlock<logSetpoint>(
           &m_cf,{
-            {"controller", "cmd_roll"},
-            {"controller", "cmd_pitch"},
-            {"controller", "cmd_yaw"},
-            {"controller", "cmd_thrust"}
+            {"ctrltarget", "pitch"},
+            {"ctrltarget", "yaw"},
+            {"ctrltarget", "thrust"},
           }, cb));
         logBlockSetpoint->start(2); // 10ms
       }
@@ -738,7 +737,7 @@ void cmdPositionSetpoint(
       }
       msg.header.frame_id = m_tf_prefix + "/base_link";
 
-      msg.pose.orientation.x = data->roll;
+      // msg.pose.orientation.x = data->roll;
       msg.pose.orientation.y = data->pitch;
       msg.pose.orientation.z = data->yaw;
       msg.pose.orientation.w = data->thrust;
