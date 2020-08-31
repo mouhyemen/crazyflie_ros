@@ -99,6 +99,7 @@ public:
     bool enable_logging_pressure,
     bool enable_logging_battery,
     bool enable_logging_pose,
+    bool enable_logging_setpoint,
     bool enable_logging_packets)
     : m_tf_prefix(tf_prefix)
     , m_cf(
@@ -118,6 +119,7 @@ public:
     , m_enable_logging_pressure(enable_logging_pressure)
     , m_enable_logging_battery(enable_logging_battery)
     , m_enable_logging_pose(enable_logging_pose)
+    , m_enable_logging_setpoint(enable_logging_setpoint)
     , m_enable_logging_packets(enable_logging_packets)
     , m_serviceEmergency()
     , m_serviceUpdateParams()
@@ -200,6 +202,13 @@ private:
     float y;
     float z;
     int32_t quatCompressed;
+  } __attribute__((packed));
+
+  struct logSetpoint {
+    float roll;
+    float pitch;
+    float yaw;
+    int32_t thrust;
   } __attribute__((packed));
 
 private:
@@ -431,6 +440,9 @@ void cmdPositionSetpoint(
     if (m_enable_logging_pose) {
       m_pubPose = n.advertise<geometry_msgs::PoseStamped>(m_tf_prefix + "/pose", 10);
     }
+    if (m_enable_logging_setpoint) {
+      m_pubSetpoint = n.advertise<geometry_msgs::PoseStamped>(m_tf_prefix + "/setpoint", 10);
+    }
     if (m_enable_logging_packets) {
       m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(m_tf_prefix + "/packets", 10);
       std::function<void(const ITransport::Ack&)> cb_genericPacket = std::bind(&CrazyflieROS::onGenericPacket, this, std::placeholders::_1);
@@ -491,6 +503,7 @@ void cmdPositionSetpoint(
     std::unique_ptr<LogBlock<logImu> > logBlockImu;
     std::unique_ptr<LogBlock<log2> > logBlock2;
     std::unique_ptr<LogBlock<logPose> > logBlockPose;
+    std::unique_ptr<LogBlock<logSetpoint> > logBlockSetpoint;
     std::vector<std::unique_ptr<LogBlockGeneric> > logBlocksGeneric(m_logBlocks.size());
     if (m_enableLogging) {
 
@@ -545,6 +558,19 @@ void cmdPositionSetpoint(
             {"stateEstimateZ", "quat"}
           }, cb));
         logBlockPose->start(1); // 10ms
+      }
+
+      if (m_enable_logging_setpoint) {
+        std::function<void(uint32_t, logSetpoint*)> cb = std::bind(&CrazyflieROS::onSetpointData, this, std::placeholders::_1, std::placeholders::_2);
+
+        logBlockSetpoint.reset(new LogBlock<logSetpoint>(
+          &m_cf,{
+            {"controller", "cmd_roll"},
+            {"controller", "cmd_pitch"},
+            {"controller", "cmd_yaw"},
+            {"controller", "cmd_thrust"}
+          }, cb));
+        logBlockSetpoint->start(2); // 10ms
       }
 
       // custom log blocks
@@ -698,6 +724,26 @@ void cmdPositionSetpoint(
       msg.pose.orientation.w = q[3];
 
       m_pubPose.publish(msg);
+    }
+  }
+
+
+  void onSetpointData(uint32_t time_in_ms, logSetpoint* data) {
+    if (m_enable_logging_setpoint) {
+      geometry_msgs::PoseStamped msg;
+      if (m_use_ros_time) {
+        msg.header.stamp = ros::Time::now();
+      } else {
+        msg.header.stamp = ros::Time(time_in_ms / 1000.0);
+      }
+      msg.header.frame_id = m_tf_prefix + "/base_link";
+
+      msg.pose.orientation.x = data->roll;
+      msg.pose.orientation.y = data->pitch;
+      msg.pose.orientation.z = data->yaw;
+      msg.pose.orientation.w = data->thrust;
+
+      m_pubSetpoint.publish(msg);
     }
   }
 
@@ -857,6 +903,7 @@ private:
   bool m_enable_logging_pressure;
   bool m_enable_logging_battery;
   bool m_enable_logging_pose;
+  bool m_enable_logging_setpoint;
   bool m_enable_logging_packets;
 
   ros::ServiceServer m_serviceEmergency;
@@ -887,6 +934,7 @@ private:
   ros::Publisher m_pubPressure;
   ros::Publisher m_pubBattery;
   ros::Publisher m_pubPose;
+  ros::Publisher m_pubSetpoint;
   ros::Publisher m_pubPackets;
   ros::Publisher m_pubRssi;
   std::vector<ros::Publisher> m_pubLogDataGeneric;
@@ -964,6 +1012,7 @@ private:
       req.enable_logging_pressure,
       req.enable_logging_battery,
       req.enable_logging_pose,
+      req.enable_logging_setpoint,
       req.enable_logging_packets);
 
     m_crazyflies[req.uri] = cf;
