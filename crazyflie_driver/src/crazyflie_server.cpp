@@ -565,9 +565,9 @@ void cmdPositionSetpoint(
 
         logBlockSetpoint.reset(new LogBlock<logSetpoint>(
           &m_cf,{
-            {"stabilizer", "rollSetpoint"},
-            {"stabilizer", "pitchSetpoint"},
-            {"stabilizer", "yawSetpoint"},
+            {"controller", "roll"},
+            {"controller", "pitch"},
+            {"controller", "yaw"},
             {"stabilizer", "thrust"},
           }, cb));
         logBlockSetpoint->start(2); // 10ms
