@@ -208,7 +208,7 @@ private:
     float roll;
     float pitch;
     float yaw;
-    int32_t thrust;
+    float thrust;
   } __attribute__((packed));
 
 private:
@@ -565,9 +565,9 @@ void cmdPositionSetpoint(
 
         logBlockSetpoint.reset(new LogBlock<logSetpoint>(
           &m_cf,{
-            {"stabilizer", "roll"},
-            {"stabilizer", "pitch"},
-            {"stabilizer", "yaw"},
+            {"stabilizer", "rollSetpoint"},
+            {"stabilizer", "pitchSetpoint"},
+            {"stabilizer", "yawSetpoint"},
             {"stabilizer", "thrust"},
           }, cb));
         logBlockSetpoint->start(2); // 10ms
