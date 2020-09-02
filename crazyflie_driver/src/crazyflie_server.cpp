@@ -441,7 +441,7 @@ void cmdPositionSetpoint(
       m_pubPose = n.advertise<geometry_msgs::PoseStamped>(m_tf_prefix + "/pose", 10);
     }
     if (m_enable_logging_setpoint) {
-      m_pubSetpoint = n.advertise<geometry_msgs::PoseStamped>(m_tf_prefix + "/setpoint", 10);
+      m_pubSetpoint = n.advertise<geometry_msgs::PoseStamped>(m_tf_prefix + "/ctrltarget", 10);
     }
     if (m_enable_logging_packets) {
       m_pubPackets = n.advertise<crazyflie_driver::crtpPacket>(m_tf_prefix + "/packets", 10);
