@@ -568,7 +568,7 @@ void cmdPositionSetpoint(
             {"controller", "roll"},
             {"controller", "pitch"},
             {"controller", "yaw"},
-            {"stabilizer", "thrust"},
+            {"controller", "thrust"},
           }, cb));
         logBlockSetpoint->start(2); // 10ms
       }
